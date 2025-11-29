@@ -1,0 +1,92 @@
+schemaVersion: 2.2.2
+metadata:
+  name: nodejs
+  displayName: Node.js Runtime
+  description: Node.js 18 application
+  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/node-js.svg
+  tags:
+    - Node.js
+    - Express
+    - ubi8
+  projectType: Node.js
+  language: JavaScript
+  version: 2.2.1
+components:
+  - name: runtime
+    container:
+      image: registry.access.redhat.com/ubi8/nodejs-18:1-32
+      args: ['tail', '-f', '/dev/null']
+      memoryLimit: 1024Mi
+      mountSources: true
+      env:
+        - name: DEBUG_PORT
+          value: '5858'
+        - name: IMAGE_REGISTRY
+          value: 'image-registry.openshift-image-registry.svc:5000'
+        - name: IMAGE_NAMESPACE
+          value: '${DEVWORKSPACE_NAMESPACE}'
+        - name: IMAGE_NAME
+          value: 'nodejs-app'
+        - name: IMAGE_TAG
+          value: 'latest'
+      endpoints:
+        - name: https-node
+          targetPort: 3000
+          protocol: https
+        - exposure: none
+          name: debug
+          targetPort: 5858
+commands:
+  - id: install
+    exec:
+      component: runtime
+      commandLine: npm install
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+  - id: build-image
+    exec:
+      component: runtime
+      commandLine: |
+        podman build -t ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG} .
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: false
+  - id: push-image
+    exec:
+      component: runtime
+      commandLine: |
+        podman tag ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:latest &&
+        podman push ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG} &&
+        podman push ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:latest
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: false
+  - id: run
+    exec:
+      component: runtime
+      commandLine: npm start
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
+  - id: debug
+    exec:
+      component: runtime
+      commandLine: npm run debug
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: debug
+        isDefault: true
+  - id: test
+    exec:
+      component: runtime
+      commandLine: npm test
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: test
+        isDefault: true
+
