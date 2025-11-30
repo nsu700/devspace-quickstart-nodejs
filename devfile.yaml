@@ -16,10 +16,6 @@ components:
     container:
       image: registry.access.redhat.com/ubi8/nodejs-18:1-32
       args: ['tail', '-f', '/dev/null']
-      memoryLimit: 4Gi       # Maximum RAM (Container creates OOMKilled if exceeded)
-      memoryRequest: 2Gi     # Guaranteed RAM
-      cpuLimit: 2000m        # Maximum CPU (2 cores)
-      cpuRequest: 500m       # Guaranteed CPU (0.5 cores)
       mountSources: true
       env:
         - name: DEBUG_PORT
